@@ -1,0 +1,7 @@
+requests
+requests-cache
+requests_oauthlib
+streamlit
+deap
+numpy
+reportlab
