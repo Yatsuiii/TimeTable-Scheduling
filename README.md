@@ -1,5 +1,5 @@
-# 📅 PLABLE
-Timetable planner for FIT CTU.
+
+Timetable planner .
 
 ## What is it?
 This app is written in Python 3(.8) and streamlit. It uses [Evolutionary algorithm](https://en.wikipedia.org/wiki/Evolutionary_algorithm) to create a timetable that satisfies some strategy.
