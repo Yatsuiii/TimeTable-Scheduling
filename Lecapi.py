@@ -1,9 +1,5 @@
-# https://github.com/MartinBurian/kosapy
-
-__author__ = "martinjr"
-__all__ = ["Kosapy"]
-
-# modified version supporting oauth2 and http session
+__author__ = "Gehrman Sparrow"
+__all__ = ["LecApi"]
 
 import xml.sax
 import requests
@@ -11,12 +7,12 @@ import requests_cache
 import re
 from datetime import datetime, date
 
-HEADERS = {"content-type": "applicaion/xml;encoding=utf-8", "accept-language": "cs"}
+HEADERS = {"content-type": "application/xml;encoding=utf-8", "accept-language": "cs"}
 
-requests_cache.install_cache("kosapy_cache", expire_after=24 * 60 * 60)
+requests_cache.install_cache("lecapi_cache", expire_after=24 * 60 * 60)
 
 
-class Kosapy:
+class LecApi:
     def __init__(self, url, auth, verbose=False, session=None):
         self._session = session
         self._kosapi = url
@@ -40,13 +36,13 @@ class Kosapy:
             if r.status_code == 403:
                 raise Exception("Wrong authentication")
             elif r.status_code == 404:
-                raise Exception("Resource %s not found" % location)
+                raise Exception(f"Resource {location} not found")
             elif r.status_code >= 500:
                 raise Exception("Internal error")
             else:
-                raise Exception("Error %d requesting %s" % (r.status_code, location))
+                raise Exception(f"Error {r.status_code} requesting {location}")
 
-        return ObjectiveKosapiDoc(bytes(r.text, "utf-8"), self)
+        return ObjectiveLecApiDoc(bytes(r.text, "utf-8"), self)
 
     def get_contents(self, feed):
         feed = (feed.get("atom:feed") if feed.get("atom:feed") else feed).get("atom:entry")
@@ -67,7 +63,7 @@ class Kosapy:
 
     def use_cache(self, use):
         if use:
-            requests_cache.install_cache("kosapy_cache", expire_after=24 * 60 * 60)
+            requests_cache.install_cache("lecapi_cache", expire_after=24 * 60 * 60)
         else:
             requests_cache.uninstall_cache()
 
@@ -110,13 +106,13 @@ class Resource:
         return self._children[item]
 
     def __repr__(self):
-        return "<KosAPI resource " + self._location + ">"
+        return "<LecApi resource " + self._location + ">"
 
 
-class ObjectiveKosapiDoc:
+class ObjectiveLecApiDoc:
     def __init__(self, doc, api):
         self._api = api
-        self._root = KosapiElement("root", (), api)
+        self._root = LecApiElement("root", (), api)
         if doc:
             self._parse_doc(doc)
 
@@ -130,10 +126,10 @@ class ObjectiveKosapiDoc:
         return self.__getattr__(item)
 
     def _parse_doc(self, doc):
-        xml.sax.parseString(doc, KosapiSaxHandler(self._root, self._api))
+        xml.sax.parseString(doc, LecApiSaxHandler(self._root, self._api))
 
 
-class KosapiElement:
+class LecApiElement:
     _redatetime = re.compile("^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$")
     _redate = re.compile("^\d{4}-\d{2}-\d{2}$")
     _rebool = re.compile("^true$|^false$")
@@ -183,7 +179,7 @@ class KosapiElement:
             return self.__getattr__(item)
 
     def __repr__(self):
-        return "<KosAPI entry " + self._name + ">"
+        return "<LecApi entry " + self._name + ">"
 
     def _parse_content(self):
         if self._redigit.match(self._content):
@@ -213,16 +209,16 @@ class KosapiElement:
                 for sub in child:
                     sub.traverse()
         else:
-            print("%s: %s (%s)" % (self._name, self._content, str(self._attrs.getNames())))
+            print(f"{self._name}: {self._content} ({str(self._attrs.getNames())})")
 
 
-class KosapiSaxHandler(xml.sax.ContentHandler):
+class LecApiSaxHandler(xml.sax.ContentHandler):
     def __init__(self, root, api):
         self.path = [root]
         self._api = api
 
     def startElement(self, name, attrs):
-        element = KosapiElement(name, attrs, self._api)
+        element = LecApiElement(name, attrs, self._api)
         self.path[-1].add_element(element)
         self.path.append(element)
 
@@ -231,3 +227,4 @@ class KosapiSaxHandler(xml.sax.ContentHandler):
 
     def characters(self, content):
         self.path[-1]._content += content.strip()
+
