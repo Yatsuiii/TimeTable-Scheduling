@@ -1,10 +1,7 @@
 import re
-from numpy.random.mtrand import weibull
 from plable.components import overlap
 from oauthlib.oauth2.rfc6749.clients import base
 import streamlit as st
-
-
 from plable.handler import get_parallels, get_class_paralles
 from plable.solver import solve
 from plable.fitness import names, functions, weights, decode
@@ -36,7 +33,7 @@ subjects = []
 info = None
 plans = []
 
-text = st.sidebar.text_area("Enter course codes (e. g. BI-PA1) separated with commas")
+text = st.sidebar.text_area("Enter course codes (e.g., BI-PA1) separated with commas")
 semester = st.sidebar.selectbox(
     "Semester",
     ["current", "next"] + [f"B{y}{s}" for y in range(17, 25) for s in [1, 2]],
@@ -83,7 +80,7 @@ if generate:
                 plans = solve(
                     parallels,
                     counters,
-                    fitness=lambda x: functions[idx](x, parallels),
+                    fitness=lambda x: functions[idx](x, parallels),  # Use the selected fitness function here
                     weights=weights[idx],
                 ).items
                 if plans:
@@ -137,3 +134,4 @@ if not st.session_state["CLICKED"] or readme:
     with open("README.md", "r") as f:
         md = f.read()
     st.markdown(md, unsafe_allow_html=True)
+
